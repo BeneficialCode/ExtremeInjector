@@ -2,7 +2,7 @@
 
 ## Intruction
 
-ExtremeInjector is a .NET program DLL injector which is runing on Windows x64 system. Hope it useful for you :) 
+Extreme Injector is a .NET program DLL injector which is runing on Windows x64 system. Hope it useful for you :) 
 
 
 ![](MainWindow.png)
@@ -10,12 +10,18 @@ ExtremeInjector is a .NET program DLL injector which is runing on Windows x64 sy
 
 
 ## Directory Structure
+
+The Hook.ini is a configuration file.
+The HookDemoXX are just some demos.
+The ProxyLoader64 and ProxyLoader32 are important for Extreme Injector. They must be placed in the same directory as the injector.
+That's all.
+
 ![](Dir.png)
 
 
 ## Usage
 
-Put Hook.ini in your inject target process'm path since the ProxyLoader will read the ini to load the .NET DLL.
+Put the Hook.ini in your inject target process'm path since the ProxyLoader will read the ini to load the .NET DLL. 
 
 ```
 [HookInfo]
