@@ -24,9 +24,16 @@ DWORD WINAPI Loader(void* params) {
     IniFile ini(path);
 
     CString dll = ini.ReadString(L"HookInfo", L"Dll");
+    OutputDebugString(dll);
+
     CString typeName = ini.ReadString(L"HookInfo", L"TypeName");
+    OutputDebugString(typeName);
+
     CString method = ini.ReadString(L"HookInfo", L"Method");
+    OutputDebugString(method);
+
     CString arg = ini.ReadString(L"HookInfo", L"Argument");
+    OutputDebugString(arg);
 
     // Tring to get runtime meta host
     HRESULT hr = CLRCreateInstance(CLSID_CLRMetaHost, IID_ICLRMetaHost, (LPVOID*)&pMetaHost);
@@ -63,8 +70,7 @@ DWORD WINAPI Loader(void* params) {
     }
 
     DWORD value = 0;
-    hr = pRuntimeHost->ExecuteInDefaultAppDomain(dll, typeName, method,
-        arg, &value);
+    hr = pRuntimeHost->ExecuteInDefaultAppDomain(dll, typeName, method, arg, &value);
     if (FAILED(hr))
     {
         OutputDebugString(L"ExecuteInDefaultAppDomain failed");
