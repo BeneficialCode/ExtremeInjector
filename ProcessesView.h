@@ -24,6 +24,8 @@ private:
 	void BuildProcessMenu();
 	void BuildToolBar();
 
+	bool IsContainCoreClr(DWORD pid);
+
 	void BuildPriorityClassMenu(WinSys::ProcessInfo* pi);
 	bool GotoFileLocation(WinSys::ProcessInfo* pi);
 	void TogglePause();

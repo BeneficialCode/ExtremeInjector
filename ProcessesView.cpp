@@ -13,6 +13,7 @@
 #include <wincodec.h>
 #include "resource.h"
 #include "InjectDLL.h"
+#include <TlHelp32.h>
 
 using namespace ImGui;
 extern ID3D11Device* g_pd3dDevice;
@@ -118,7 +119,7 @@ void ProcessesView::DoUpdate(){
 	for (auto& pi : _pm.GetNewProcesses()) {
 		auto& px = GetProcessInfoEx(pi.get());
 		auto attributes = px.GetAttributes(_pm);
-		if ((attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
+		if (IsContainCoreClr(pi->Id)) {
 			_processes.push_back(pi);
 			px.New(2000);
 		}
@@ -127,7 +128,7 @@ void ProcessesView::DoUpdate(){
 	for (auto& pi : _pm.GetTerminatedProcesses()) {
 		auto& px = GetProcessInfoEx(pi.get());
 		auto attributes = px.GetAttributes(_pm);
-		if ((attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed) {
+		if (IsContainCoreClr(pi->Id)) {
 			px.Term(2000);
 		}
 	}
@@ -268,6 +269,23 @@ CStringA ProcessesView::ProcessAttributesToString(ProcessAttributes attributes) 
 	return text;
 }
 
+bool ProcessesView::IsContainCoreClr(DWORD pid) {
+	wil::unique_handle hSnapshot(::CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid));
+	if (!hSnapshot)
+		return false;
+
+	MODULEENTRY32 me;
+	me.dwSize = sizeof(me);
+	::Module32First(hSnapshot.get(), &me);
+	do
+	{
+		if (::_wcsicmp(L"coreclr.dll", me.szModule) == 0)
+			return true;
+	} while (::Module32Next(hSnapshot.get(),&me));
+
+	return false;
+}
+
 void ProcessesView::BuildTable() {
 	auto& g = Globals::Get();
 
@@ -313,10 +331,9 @@ void ProcessesView::BuildTable() {
 			if (empty) {
 				auto processes = _pm.GetProcesses();
 				for (auto& p : processes) {
-					auto& px = GetProcessInfoEx(p.get());
-					auto attributes = px.GetAttributes(_pm);
-					if((attributes & ProcessAttributes::Managed) == ProcessAttributes::Managed)
+					if (IsContainCoreClr(p->Id)) {
 						_processes.push_back(p);
+					}
 				}
 			}
 			else {

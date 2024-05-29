@@ -32,6 +32,13 @@ BOOL InjectDllToProcess(DWORD pid,BOOL isX64) {
 	else
 		wcscat_s(path, L"\\ProxyLoader32.dll");
 
+	// Is the dll file exists?
+	if (::GetFileAttributes(path) == INVALID_FILE_ATTRIBUTES) {
+		OutputDebugString(L"missing proxy loader dll.");
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
 	ULONG size = (wcslen(path) + 1) * sizeof(WCHAR);
 	LPTSTR pLibFileRemote = (LPTSTR)::VirtualAllocEx(hProcess, nullptr,size,MEM_COMMIT, PAGE_READWRITE);
 	if (pLibFileRemote == NULL) {
