@@ -281,6 +281,8 @@ bool ProcessesView::IsContainCoreClr(DWORD pid) {
 	{
 		if (::_wcsicmp(L"coreclr.dll", me.szModule) == 0)
 			return true;
+		if (::_wcsicmp(L"clr.dll", me.szModule) == 0)
+			return true;
 	} while (::Module32Next(hSnapshot.get(),&me));
 
 	return false;

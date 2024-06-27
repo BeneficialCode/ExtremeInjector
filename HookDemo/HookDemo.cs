@@ -38,6 +38,14 @@ namespace HookDemo
             {
                 str = "C7-65-65-DC-97-BA-24-84-9E-D9-AD-11-B9-4F-39-C9";
             }
+            if(str == "17-58-BF-B6-B4-1B-26-F2-76-D5-50-69-B2-04-CD-8E")
+            {
+                str = "C7-65-65-DC-97-BA-24-84-9E-D9-AD-11-B9-4F-39-C9";
+            }
+            if(str == "ED-31-51-25-FA-AB-C3-4E-DD-6B-7E-7E-0D-89-C4-6A")
+            {
+                str = "C7-65-65-DC-97-BA-24-84-9E-D9-AD-11-B9-4F-39-C9";
+            }
             Debug.WriteLine(str);
             return str;
         }
@@ -107,5 +115,11 @@ namespace HookDemo
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out IntPtr lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
     }
 }
