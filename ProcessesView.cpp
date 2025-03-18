@@ -224,7 +224,9 @@ void ProcessesView::BuildProperitesWindow(ProcessProperties* props){
 	SetNextWindowSizeConstraints(ImVec2(300, 200), GetIO().DisplaySize);
 	SetNextWindowSize(ImVec2(GetIO().DisplaySize.x / 2, 300), ImGuiCond_Once);
 	if (Begin(props->GetName().c_str(), &props->WindowOpen, ImGuiWindowFlags_None)) {
-
+		printf("hello world!");
+		End();
+		return;
 	}
 	End();
 }
@@ -470,7 +472,7 @@ void ProcessesView::BuildTable() {
 							GetOrAddProcessProperties(p);
 						}
 						Separator();
-						if (MenuItem("Inject DLL")) {
+						if (MenuItem("Inject Proxy DLL")) {
 							bool isX64 = px.GetBitness() == 64;
 							BOOL success = InjectDllToProcess(_selectedProcess->Id, isX64);
 							if (success) {
@@ -480,6 +482,26 @@ void ProcessesView::BuildTable() {
 								_injectFailed = true;
 							}
 							_infoOpen = true;
+						}
+						if (MenuItem("Inject DLL")) {
+							bool isX64 = px.GetBitness() == 64;
+							WCHAR dllPath[MAX_PATH] = { 0 };
+							OPENFILENAMEW ofn = { 0 };
+							ofn.lStructSize = sizeof(ofn);
+							ofn.hwndOwner = GetActiveWindow();
+							ofn.lpstrFilter = L"DLL Files\0*.dll\0All Files\0*.*\0";
+							ofn.lpstrFile = dllPath;
+							ofn.nMaxFile = MAX_PATH;
+							ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+
+							if (GetOpenFileNameW(&ofn)) {
+								if (!InjectDllToProcess(_selectedProcess->Id, isX64, dllPath)) {
+									_injectFailed = true;
+								}
+								else {
+									_injectFailed = false;
+								}
+							}
 						}
 						EndPopup();
 					}

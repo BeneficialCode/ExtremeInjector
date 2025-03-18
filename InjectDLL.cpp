@@ -110,6 +110,91 @@ BOOL InjectDllToProcess(DWORD pid,BOOL isX64) {
 	return TRUE;
 }
 
+BOOL InjectDllToProcess(DWORD pid, BOOL isX64, WCHAR* dllPath) {
+	g_bIs64Bit = isX64;
+	HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+	if (hProcess == NULL) {
+		return FALSE;
+	}
+
+	// Is the dll file exists?
+	if (::GetFileAttributes(dllPath) == INVALID_FILE_ATTRIBUTES) {
+		OutputDebugString(L"missing proxy loader dll.");
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
+	ULONG size = (wcslen(dllPath) + 1) * sizeof(WCHAR);
+	LPTSTR pLibFileRemote = (LPTSTR)::VirtualAllocEx(hProcess, nullptr, size, MEM_COMMIT, PAGE_READWRITE);
+	if (pLibFileRemote == NULL) {
+		OutputDebugString(L"VirtualAllocEx failed");
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
+	NTSTATUS status = NtWriteVirtualMemory(hProcess, pLibFileRemote, dllPath, size, nullptr);
+	if (!NT_SUCCESS(status)) {
+		OutputDebugString(L"NtWriteVirtualMemory failed");
+		::VirtualFreeEx(hProcess, pLibFileRemote, 0, MEM_RELEASE);
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+	HMODULE hKernel32 = ::GetModuleHandle(L"Kernel32");
+	if (hKernel32 == NULL) {
+		OutputDebugString(L"GetModuleHandle failed");
+		::VirtualFreeEx(hProcess, pLibFileRemote, 0, MEM_RELEASE);
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
+	LPTHREAD_START_ROUTINE pLoadLibraryW = nullptr;
+	if (g_bIs64Bit) {
+		pLoadLibraryW = (LPTHREAD_START_ROUTINE)::GetProcAddress(hKernel32, "LoadLibraryW");
+	}
+	else {
+		std::wstring systemRoot = USER_SHARED_DATA->NtSystemRoot;
+		std::wstring dllPath = systemRoot + L"\\SysWOW64\\Kernel32.dll";
+		PEParser parser(dllPath.c_str());
+		std::vector<ExportedSymbol> exports = parser.GetExports();
+		ULONG rva = 0;
+		for (auto& exp : exports) {
+			if (exp.Name == "LoadLibraryW") {
+				rva = exp.Address;
+				break;
+			}
+		}
+		ULONG_PTR base = GetKernel32BaseAddress(pid);
+		if (base == 0) {
+			OutputDebugString(L"GetKernel32BaseAddress failed");
+			::VirtualFreeEx(hProcess, pLibFileRemote, 0, MEM_RELEASE);
+			::CloseHandle(hProcess);
+			return FALSE;
+		}
+		pLoadLibraryW = (LPTHREAD_START_ROUTINE)(base + rva);
+		CString str;
+		str.Format(L"LoadLibraryW: %p", pLoadLibraryW);
+		OutputDebugString(str);
+	}
+	if (pLoadLibraryW == NULL) {
+		OutputDebugString(L"GetProcAddress failed");
+		::VirtualFreeEx(hProcess, pLibFileRemote, 0, MEM_RELEASE);
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
+	HANDLE hThread = RtlCreateRemoteThread(hProcess, nullptr, 0, pLoadLibraryW, pLibFileRemote, 0, nullptr);
+	if (hThread == NULL) {
+		OutputDebugString(L"RtlCreateRemoteThread failed");
+		::VirtualFreeEx(hProcess, pLibFileRemote, 0, MEM_RELEASE);
+		::CloseHandle(hProcess);
+		return FALSE;
+	}
+
+	OutputDebugString(L"Inject successfullly");
+	::CloseHandle(hThread);
+	return TRUE;
+}
+
 NTSTATUS NtWriteVirtualMemory(
 	IN HANDLE               ProcessHandle,
 	IN PVOID                BaseAddress,

@@ -226,6 +226,7 @@ HANDLE RtlCreateRemoteThread(
 BOOL InjectDllToProcess(DWORD pid,BOOL isX64);
 EXTERN_C VOID ShellcodeFun64(VOID);
 ULONG_PTR GetKernel32BaseAddress(DWORD pid);
+BOOL InjectDllToProcess(DWORD pid, BOOL isX64, WCHAR* dllPath);
 
 
 

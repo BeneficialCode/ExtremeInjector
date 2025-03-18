@@ -46,6 +46,10 @@ namespace HookDemo
             {
                 str = "C7-65-65-DC-97-BA-24-84-9E-D9-AD-11-B9-4F-39-C9";
             }
+            if(str == "6F-A1-29-B0-9F-E1-95-12-06-14-16-CE-23-17-30-84")
+            {
+                str = "C7-65-65-DC-97-BA-24-84-9E-D9-AD-11-B9-4F-39-C9";
+            }
             Debug.WriteLine(str);
             return str;
         }
